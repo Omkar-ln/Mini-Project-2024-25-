@@ -1,0 +1,66 @@
+import processing.serial.*;
+
+Serial myPort; // Serial object
+String data = ""; // Data from Arduino
+int angle, distance1, distance2;
+
+void setup() {
+  size(800, 800); // Screen size
+  myPort = new Serial(this, "COM4", 9600); // Change COM4 to your port
+  myPort.bufferUntil('\n');
+}
+
+void draw() {
+  background(0); // Black background
+  translate(width / 2, height / 2); // Center of screen
+
+  // Draw radar arcs
+  noFill();
+  stroke(0, 255, 0);
+  strokeWeight(2);
+  for (int i = 1; i <= 4; i++) {
+    arc(0, 0, i * 150, i * 150, PI, TWO_PI);
+  }
+
+  // Draw angle lines
+  for (int i = 0; i <= 180; i += 30) {
+    float x = cos(radians(i)) * 600;
+    float y = sin(radians(i)) * 600;
+    line(0, 0, x, -y);
+  }
+
+  // Draw objects from sensor 1
+  if (distance1 > 0 && distance1 <= 400) {
+    float x1 = cos(radians(angle)) * distance1 * 1.5;
+    float y1 = sin(radians(angle)) * distance1 * 1.5;
+    fill(255, 0, 0);
+    ellipse(x1, -y1, 10, 10);
+  }
+
+  // Draw objects from sensor 2
+  if (distance2 > 0 && distance2 <= 400) {
+    float x2 = cos(radians(360 - angle)) * distance2 * 1.5;
+    float y2 = sin(radians(360 - angle)) * distance2 * 1.5;
+    fill(0, 0, 255);
+    ellipse(x2, -y2, 10, 10);
+  }
+
+  // Draw radar sweep
+  stroke(0, 255, 0);
+  float sweepX = cos(radians(angle)) * 600;
+  float sweepY = sin(radians(angle)) * 600;
+  line(0, 0, sweepX, -sweepY);
+}
+
+void serialEvent(Serial myPort) {
+  data = myPort.readStringUntil('\n'); // Read data from Arduino
+  if (data != null) {
+    data = trim(data);
+    String[] parts = split(data, ',');
+    if (parts.length == 3) {
+      angle = int(parts[0]);
+      distance1 = int(parts[1]);
+      distance2 = int(parts[2]);
+    }
+  }
+}
